@@ -172,7 +172,7 @@ const Home = (props: { classes: any }) => {
 		const fetchResults = () => {
 			axios
 				.get(
-					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=${distance}&type=health&name=${type.search}&key=AIzaSyDXvUDt3rdySy5vFgR3MnHGvbiRT2-6sdA`
+					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=${distance}&type=health&name=${type.search}&key=YOURAPIKEY`
 				)
 				.then((res) => {
 					console.log(res.data);
