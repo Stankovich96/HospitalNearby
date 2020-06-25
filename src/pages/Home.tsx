@@ -73,6 +73,7 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 			justifyContent: "flex-end",
 			padding: 30,
 			textAlign: "right",
+			marginLeft: 300,
 		},
 		headerText: {
 			justifyContent: "flex-start",
@@ -109,13 +110,9 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 			top: 15,
 			width: 200,
 		},
-		roott: {
-			width: "100%",
-			top: 150,
-			maxWidth: 400,
-		},
 		listItem: {
 			alignItems: "flex-start",
+			cursor: "pointer",
 		},
 		inner: {
 			display: "inline",
@@ -127,29 +124,41 @@ const Home = (props: { classes: any }) => {
 	const { classes } = props;
 
 	dayjs.extend(relativeTime);
-	const [nearbyplaces, setNearbyplaces] = useState({});
-	const [type, setType] = useState({
+	const [nearbyplaces, setNearbyplaces] = useState<any>({});
+	const [type, setType] = useState<any>({
 		search: "",
 	});
-	const [coordinates, setCoordinates] = useState({
-		lat: null,
-		lng: null,
+	const [coordinates, setCoordinates] = useState<any>({
+		lat: 0,
+		lng: 0,
 	});
 	const [history, sethistory] = useState<any>([]);
-	const [distance, setDistance] = useState("");
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
+	const [distance, setDistance] = useState<any>("");
+	const [loading, setLoading] = useState<any>(false);
+	const [error, setError] = useState<any>("");
 
+	const handleLocation = () => {
+		navigator.geolocation.getCurrentPosition(
+			(position: Position) => {
+				setCoordinates({
+					lat: position.coords.latitude,
+					lng: position.coords.longitude,
+				});
+			},
+			(error: any) => {
+				alert("Geolocation Failed, try enable your location");
+			}
+		);
+	};
 	const handleChange = (event: { target: { name: any; value: any } }) => {
 		const { name, value } = event.target;
-		setType((type) => ({ ...type, [name]: value }));
-		// console.log(event.target.value);
+		setType((type: any) => ({ ...type, [name]: value }));
 	};
 
 	const handleSelect = (event: { target: { value: any } }) => {
 		const { value } = event.target;
+		handleLocation();
 		setDistance(value);
-		// console.log(event.target.value);
 	};
 
 	const clearFields = () => {
@@ -158,6 +167,32 @@ const Home = (props: { classes: any }) => {
 		});
 		setDistance("");
 	};
+
+	useEffect(() => {
+		const fetchResults = () => {
+			axios
+				.get(
+					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=${distance}&type=health&name=${type.search}&key=AIzaSyDXvUDt3rdySy5vFgR3MnHGvbiRT2-6sdA`
+				)
+				.then((res) => {
+					console.log(res.data);
+					const database = firebase.firestore();
+					database.collection("searches").add({
+						latitude: coordinates.lat,
+						longitude: coordinates.lng,
+						radius: distance,
+						searchTerm: type.search,
+						createdAt: Date.now(),
+					});
+					setNearbyplaces(res.data);
+				})
+				.catch((error) => setError(error.message));
+			console.log(coordinates.lat);
+			console.log(coordinates.lng);
+		};
+		if (coordinates.lat && coordinates.lng && type.search && distance)
+			fetchResults();
+	}, [coordinates.lat, coordinates.lng, type.search, distance]);
 
 	useEffect(() => {
 		firebase
@@ -179,6 +214,22 @@ const Home = (props: { classes: any }) => {
 			});
 	}, []);
 
+	const handleSearchHistory = (
+		event: any,
+		latitude: any,
+		longitude: any,
+		searchTerm: any,
+		radius: any
+	) => {
+		setCoordinates({
+			lat: latitude,
+			lng: longitude,
+		});
+		setType({
+			search: searchTerm,
+		});
+		setDistance(radius);
+	};
 	const handleSubmit = (event: { preventDefault: () => void }) => {
 		setLoading(true);
 		setNearbyplaces("");
@@ -191,44 +242,9 @@ const Home = (props: { classes: any }) => {
 			distance,
 		};
 		if (
-			SearchDetails.search === "Hospital" ||
-			("hospital" && DistanceDetails.distance !== "")
+			SearchDetails.search !== "" ||
+			("" && DistanceDetails.distance !== "")
 		) {
-			var lati = coordinates.lat;
-			var longi = coordinates.lng;
-
-			const success = (position: {
-				coords: { latitude: any; longitude: any };
-			}) => {
-				lati = position.coords.latitude;
-				longi = position.coords.longitude;
-				console.log(lati);
-				console.log(longi);
-
-				axios
-					.get(
-						`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lati},${longi}&radius=${distance}&type=${type.search}&keyword=hospital&key=AIzaSyDXvUDt3rdySy5vFgR3MnHGvbiRT2-6sdA`
-					)
-					.then((res) => {
-						console.log(res.data);
-						const database = firebase.firestore();
-						database.collection("searches").add({
-							latitude: position.coords.latitude,
-							longitude: position.coords.longitude,
-							radius: distance,
-							searchTerm: type.search,
-							createdAt: Date.now(),
-						});
-						setNearbyplaces(res.data);
-					})
-					.catch((error) => setError(error.message));
-				console.log(lati);
-				console.log(longi);
-			};
-			const error = () => {
-				alert("Geolocation Failed, try enable your location");
-			};
-			navigator.geolocation.getCurrentPosition(success, error);
 			clearFields();
 		} else if (SearchDetails.search === "" || DistanceDetails.distance === "") {
 			alert("Please fill the Details");
@@ -259,7 +275,7 @@ const Home = (props: { classes: any }) => {
 								id="outline-search"
 								name="search"
 								type="text"
-								label="Type Hospital"
+								label="Enter any health related term"
 								color="primary"
 								inputProps={{}}
 								value={type.search}
@@ -303,11 +319,27 @@ const Home = (props: { classes: any }) => {
 						<h1 className={classes.headerText}>Recent Searches</h1>
 						{history ? (
 							history.map(
-								(list: { id: any; searchTerm: any; createdAt: any }) => (
+								(list: {
+									id: any;
+									searchTerm: any;
+									createdAt: any;
+									latitude: any;
+									longitude: any;
+									radius: any;
+								}) => (
 									<List key={list.id} className={classes.roott}>
 										<ListItem key={list.id} className={classes.listItem}>
 											<ListItemText
 												primary={list.searchTerm}
+												onClick={(event) => {
+													handleSearchHistory(
+														event,
+														list.latitude,
+														list.longitude,
+														list.searchTerm,
+														list.radius
+													);
+												}}
 												secondary={
 													<Fragment>
 														<Typography
