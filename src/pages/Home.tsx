@@ -129,6 +129,8 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 const Home = (props: { classes: any; history: any }) => {
 	const { classes } = props;
 
+	const userId = localStorage.getItem("userId");
+
 	dayjs.extend(relativeTime);
 	const [nearbyplaces, setNearbyplaces] = useState<any>({});
 	const [type, setType] = useState<any>({
@@ -190,6 +192,7 @@ const Home = (props: { classes: any; history: any }) => {
 					console.log(res.data);
 					const database = firebase.firestore();
 					database.collection("searches").add({
+						userId: userId,
 						latitude: coordinates.lat,
 						longitude: coordinates.lng,
 						radius: distance,
@@ -201,6 +204,7 @@ const Home = (props: { classes: any; history: any }) => {
 				.catch((error) => setError(error.message));
 			console.log(coordinates.lat);
 			console.log(coordinates.lng);
+			console.log(userId);
 		};
 		if (coordinates.lat && coordinates.lng && type.search && distance)
 			fetchResults();
@@ -212,7 +216,8 @@ const Home = (props: { classes: any; history: any }) => {
 			.firestore()
 
 			.collection("searches")
-
+			.where("userId", "==", userId)
+			.orderBy("createdAt", "desc")
 			.onSnapshot((snapshot) => {
 				const lists = snapshot.docs.map((doc) => ({
 					id: doc.id,

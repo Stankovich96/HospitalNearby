@@ -6,9 +6,6 @@ import {
 	Switch,
 	withRouter,
 } from "react-router-dom";
-import { ThemeProvider as MuiThemeProvider } from "@material-ui/core/styles";
-import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
-import themeFile from "./utils/theme";
 
 import firebase from "./utils/config";
 
@@ -16,8 +13,6 @@ import firebase from "./utils/config";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-
-const theme = createMuiTheme(themeFile);
 
 function App(props: any) {
 	const [userState, setUserState] = useState<any>();
@@ -28,14 +23,14 @@ function App(props: any) {
 			firebase.auth().onAuthStateChanged((user) => {
 				if (user?.uid === undefined || null) {
 					console.log(user?.uid);
-					localStorage.removeItem("userid");
+					localStorage.removeItem("userId");
 					setAuthState(false);
 					console.log(authState);
 					props.history.push("/login");
 				} else {
 					console.log(user?.uid);
 					setUserState(user?.uid);
-					localStorage.setItem("userid", `${user?.uid}`);
+					localStorage.setItem("userId", `${user?.uid}`);
 					console.log(userState);
 					setAuthState(true);
 					props.history.push("/");

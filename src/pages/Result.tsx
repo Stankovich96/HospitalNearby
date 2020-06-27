@@ -90,7 +90,7 @@ const Result = (props: {
 										variant="body2"
 										color="primary"
 									>
-										Address: {place.vicinity}
+										{place.vicinity}
 									</Typography>
 								</Fragment>
 							}
