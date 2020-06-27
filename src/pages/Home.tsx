@@ -118,9 +118,15 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 			display: "inline",
 			variant: "body2",
 		},
+		button: {
+			marginTop: 10,
+			marginRight: 10,
+			position: "absolute",
+			right: 100,
+		},
 	});
 
-const Home = (props: { classes: any }) => {
+const Home = (props: { classes: any; history: any }) => {
 	const { classes } = props;
 
 	dayjs.extend(relativeTime);
@@ -168,11 +174,17 @@ const Home = (props: { classes: any }) => {
 		setDistance("");
 	};
 
+	const logout = () => {
+		localStorage.clear();
+		firebase.auth().signOut();
+		props.history.push("/login");
+	};
+
 	useEffect(() => {
 		const fetchResults = () => {
 			axios
 				.get(
-					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=${distance}&type=health&name=${type.search}&key=YOURAPIKEY`
+					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=${distance}&type=health&name=${type.search}&key=AIzaSyDAHDj8RP4hlRA_GZsaLWqTUxkXlxU-8U8`
 				)
 				.then((res) => {
 					console.log(res.data);
@@ -259,6 +271,15 @@ const Home = (props: { classes: any }) => {
 						<img src="Hospital.png" alt="Hospital" className={classes.logo} />
 						<h3 className={classes.title}>HospitalNow</h3>
 					</Link>
+					<Button
+						type="submit"
+						variant="contained"
+						color="secondary"
+						className={classes.button}
+						onClick={logout}
+					>
+						LOGOUT
+					</Button>
 				</Toolbar>
 			</AppBar>
 
