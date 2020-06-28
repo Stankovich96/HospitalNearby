@@ -178,7 +178,7 @@ const Signup = (props: any) => {
 								</Button>
 								<br />
 								<small>
-									Don't have an account?{' '}
+									Don't have an account?
 									<Link
 										to='/login'
 										color='primary'
