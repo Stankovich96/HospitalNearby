@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import React from "react";
 import withStyles from "@material-ui/core/styles/withStyles";
 
 //Material Ui
@@ -9,10 +9,9 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import Avatar from "@material-ui/core/Avatar";
-import Typography from "@material-ui/core/Typography";
 import Rating from "@material-ui/lab/Rating";
 
-const styles = (theme: { palette: { common: { white: string } } }) =>
+const styles = (theme: any) =>
 	createStyles({
 		root: {
 			width: "100%",
@@ -38,13 +37,13 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 	});
 
 const Result = (props: {
-	classes: any;
-	distance: any;
+	distance: number;
 	places: any;
-	loading: any;
+	loading: boolean;
 	error: any;
+	classes: any;
 }) => {
-	const { classes, distance, places, loading, error } = props;
+	const { distance, places, loading, error, classes } = props;
 
 	if (error) {
 		return (
@@ -81,20 +80,7 @@ const Result = (props: {
 						<ListItemAvatar>
 							<Avatar alt="Place Icon" src={place.icon} />
 						</ListItemAvatar>
-						<ListItemText
-							primary={place.name}
-							secondary={
-								<Fragment>
-									<Typography
-										className={classes.inner}
-										variant="body2"
-										color="primary"
-									>
-										{place.vicinity}
-									</Typography>
-								</Fragment>
-							}
-						/>
+						<ListItemText primary={place.name} secondary={place.vicinity} />
 						<br />
 						<Rating name="disabled" value={place.rating} disabled />
 					</ListItem>

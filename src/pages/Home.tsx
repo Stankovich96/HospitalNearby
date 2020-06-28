@@ -1,4 +1,6 @@
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState, useEffect, useCallback } from "react";
+import { useQuery } from "@apollo/react-hooks";
+import gql from "graphql-tag";
 import withStyles from "@material-ui/core/styles/withStyles";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -14,7 +16,6 @@ import { CircularProgress } from "@material-ui/core";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -126,31 +127,70 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 		},
 	});
 
-const Home = (props: { classes: any; history: any }) => {
-	const { classes } = props;
-
+const Home = (props: any) => {
+	const { classes, history } = props;
 	const userId = localStorage.getItem("userId");
 
+	const SEARCH_HISTORY = gql`
+		query($userId: ID!) {
+			searchHistory(userId: $userId) {
+				id
+				longitude
+				latitude
+				radius
+				searchTerm
+			}
+		}
+	`;
+
+	const { loading: isLoading, data, error: isError, refetch } = useQuery(
+		SEARCH_HISTORY,
+		{
+			variables: {
+				userId,
+			},
+		}
+	);
 	dayjs.extend(relativeTime);
-	const [nearbyplaces, setNearbyplaces] = useState<any>({});
-	const [type, setType] = useState<any>({
+	type Coordinates = {
+		lat: number;
+		lng: number;
+	};
+	type GeneralState = {
+		search: string;
+		coordinates: Coordinates;
+		distance: number;
+		loading: boolean;
+		error: any;
+	};
+	const [generalState, setGeneralState] = useState<GeneralState>({
 		search: "",
+		coordinates: {
+			lat: 0,
+			lng: 0,
+		},
+		distance: 1,
+		loading: false,
+		error: null,
 	});
-	const [coordinates, setCoordinates] = useState<any>({
-		lat: 0,
-		lng: 0,
-	});
-	const [history, sethistory] = useState<any>([]);
-	const [distance, setDistance] = useState<any>("");
-	const [loading, setLoading] = useState<any>(false);
-	const [error, setError] = useState<any>("");
+	const { search, coordinates, distance, loading, error } = generalState;
+	const { lat, lng } = coordinates;
+	const handleSetState = useCallback(
+		(newState: any) => {
+			return setGeneralState({ ...generalState, ...newState });
+		},
+		[generalState]
+	);
+	const [nearbyplaces, setNearbyplaces] = useState<any>({});
 
 	const handleLocation = () => {
 		navigator.geolocation.getCurrentPosition(
 			(position: Position) => {
-				setCoordinates({
-					lat: position.coords.latitude,
-					lng: position.coords.longitude,
+				handleSetState({
+					coordinates: {
+						lat: position.coords.latitude,
+						lng: position.coords.longitude,
+					},
 				});
 			},
 			(error: any) => {
@@ -158,113 +198,123 @@ const Home = (props: { classes: any; history: any }) => {
 			}
 		);
 	};
-	const handleChange = (event: { target: { name: any; value: any } }) => {
-		const { name, value } = event.target;
-		setType((type: any) => ({ ...type, [name]: value }));
+	const handleChange = (event: any) => {
+		const { value } = event.target;
+		handleSetState({
+			search: value,
+		});
 	};
 
-	const handleSelect = (event: { target: { value: any } }) => {
+	const handleSelect = (event: any) => {
 		const { value } = event.target;
 		handleLocation();
-		setDistance(value);
-	};
-
-	const clearFields = () => {
-		setType({
-			search: "",
+		handleSetState({
+			distance: value,
 		});
-		setDistance("");
 	};
 
 	const logout = () => {
 		localStorage.clear();
 		firebase.auth().signOut();
-		props.history.push("/login");
+		history.push("/login");
 	};
 
 	useEffect(() => {
-		const fetchResults = () => {
-			axios
-				.get(
-					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=${distance}&type=health&name=${type.search}&key=AIzaSyDAHDj8RP4hlRA_GZsaLWqTUxkXlxU-8U8`
-				)
-				.then((res) => {
-					console.log(res.data);
-					const database = firebase.firestore();
-					database.collection("searches").add({
-						userId: userId,
-						latitude: coordinates.lat,
-						longitude: coordinates.lng,
-						radius: distance,
-						searchTerm: type.search,
-						createdAt: Date.now(),
-					});
-					setNearbyplaces(res.data);
-				})
-				.catch((error) => setError(error.message));
-			console.log(coordinates.lat);
-			console.log(coordinates.lng);
-			console.log(userId);
+		const fetchResults = async () => {
+			// handleSetState({
+			// 	loading: true,
+			// });
+			const payload = {
+				latitude: lat,
+				longitude: lng,
+				radius: distance,
+				userId: userId,
+				searchTerm: search,
+				createdAt: Date.now(),
+			};
+			try {
+				const res = await axios.get(
+					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${
+						distance * 1000
+					}&type=health&name=${search}&key=AIzaSyDAHDj8RP4hlRA_GZsaLWqTUxkXlxU-8U8`
+				);
+				await firebase.firestore().collection("searches").add(payload);
+				setNearbyplaces(res.data);
+				// handleSetState({
+				// 	loading: false,
+				// });
+			} catch (error) {
+				console.log(error);
+				// handleSetState({
+				// 	error,
+				// 	loading: false,
+				// });
+			}
 		};
-		if (coordinates.lat && coordinates.lng && type.search && distance)
+		if (lat && lng && search && distance) {
 			fetchResults();
-	}, [coordinates.lat, coordinates.lng, type.search, distance]);
-
-	useEffect(() => {
-		firebase
-
-			.firestore()
-
-			.collection("searches")
-			.where("userId", "==", userId)
-			.orderBy("createdAt", "desc")
-			.onSnapshot((snapshot) => {
-				const lists = snapshot.docs.map((doc) => ({
-					id: doc.id,
-
-					...doc.data(),
-				}));
-
-				sethistory(lists);
-				console.log(lists);
-				console.log(history);
-			});
-	}, []);
+		}
+	}, [lat, lng, distance, search]);
 
 	const handleSearchHistory = (
 		event: any,
-		latitude: any,
-		longitude: any,
-		searchTerm: any,
-		radius: any
+		latitude: number,
+		longitude: number,
+		searchTerm: string,
+		radius: number
 	) => {
-		setCoordinates({
-			lat: latitude,
-			lng: longitude,
-		});
-		setType({
+		handleSetState({
 			search: searchTerm,
+			distance: radius,
+			loading: true,
+			coordinates: {
+				lat: latitude,
+				lng: longitude,
+			},
 		});
-		setDistance(radius);
 	};
 	const handleSubmit = (event: { preventDefault: () => void }) => {
-		setLoading(true);
-		setNearbyplaces("");
 		event.preventDefault();
-
-		const SearchDetails = {
-			search: type.search,
-		};
-		const DistanceDetails = {
-			distance,
-		};
-		if (
-			SearchDetails.search !== "" ||
-			("" && DistanceDetails.distance !== "")
-		) {
-			clearFields();
-		} else if (SearchDetails.search === "" || DistanceDetails.distance === "") {
+		if (search === "") {
 			alert("Please fill the Details");
+		}
+		handleSetState({
+			search: "",
+			distance: "",
+			loading: true,
+		});
+	};
+
+	const renderSearchHistoryList = () => {
+		return data.searchHistory.map((search: any) => {
+			const { latitude, longitude, searchTerm, radius, id, createdAt } = search;
+			return (
+				<ListItem className={classes.listItem} key={id}>
+					<ListItemText
+						primary={searchTerm}
+						onClick={(event) => {
+							handleSearchHistory(
+								event,
+								latitude,
+								longitude,
+								searchTerm,
+								radius
+							);
+						}}
+						secondary={dayjs(createdAt).fromNow()}
+					/>
+				</ListItem>
+			);
+		});
+	};
+	const displaySearchHistory = (): false | JSX.Element => {
+		if (isLoading) {
+			return <CircularProgress size={50} className={classes.progress} />;
+		} else {
+			if (data.searchHistory.length > 0) {
+				return <List>{renderSearchHistoryList()}</List>;
+			}
+			return <h4>No recent history for you</h4>;
 		}
 	};
 
@@ -304,7 +354,7 @@ const Home = (props: { classes: any; history: any }) => {
 								label="Enter any health related term"
 								color="primary"
 								inputProps={{}}
-								value={type.search}
+								value={search}
 								onChange={handleChange}
 								variant="outlined"
 								className={classes.MuiFormControlRoot}
@@ -325,16 +375,15 @@ const Home = (props: { classes: any; history: any }) => {
 								onChange={handleSelect}
 								className={classes.MuiInputRoot}
 							>
-								<MenuItem value="1000">1</MenuItem>
-								<MenuItem value="2000">2</MenuItem>
-								<MenuItem value="3000">3</MenuItem>
-								<MenuItem value="4000">4</MenuItem>
-								<MenuItem value="5000">5</MenuItem>
+								<MenuItem value={1}>1</MenuItem>
+								<MenuItem value={2}>2</MenuItem>
+								<MenuItem value={3}>3</MenuItem>
+								<MenuItem value={4}>4</MenuItem>
+								<MenuItem value={5}>5</MenuItem>
 							</Select>
 						</form>
 
 						<Result
-							classes={classes}
 							distance={distance}
 							places={nearbyplaces}
 							loading={loading}
@@ -343,52 +392,7 @@ const Home = (props: { classes: any; history: any }) => {
 					</div>
 					<div className={classes.headerRight}>
 						<h1 className={classes.headerText}>Recent Searches</h1>
-						{history ? (
-							history.map(
-								(list: {
-									id: any;
-									searchTerm: any;
-									createdAt: any;
-									latitude: any;
-									longitude: any;
-									radius: any;
-								}) => (
-									<List key={list.id} className={classes.roott}>
-										<ListItem key={list.id} className={classes.listItem}>
-											<ListItemText
-												primary={list.searchTerm}
-												onClick={(event) => {
-													handleSearchHistory(
-														event,
-														list.latitude,
-														list.longitude,
-														list.searchTerm,
-														list.radius
-													);
-												}}
-												secondary={
-													<Fragment>
-														<Typography
-															className={classes.inner}
-															variant="body2"
-															color="primary"
-														>
-															{dayjs(list.createdAt).fromNow()}
-														</Typography>
-													</Fragment>
-												}
-											/>
-										</ListItem>
-									</List>
-								)
-							)
-						) : (
-							<div>
-								{loading && (
-									<CircularProgress size={20} className={classes.progress} />
-								)}
-							</div>
-						)}
+						{displaySearchHistory()}
 					</div>
 				</div>
 			</div>

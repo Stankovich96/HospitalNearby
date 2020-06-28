@@ -1,29 +1,29 @@
-import React, { Fragment, useState, useEffect } from "react";
-import withStyles from "@material-ui/core/styles/withStyles";
-import { Link } from "react-router-dom";
-import firebase from "../utils/config";
+import React, { Fragment, useState } from 'react';
+import withStyles from '@material-ui/core/styles/withStyles';
+import { Link } from 'react-router-dom';
+import firebase from '../utils/config';
 
 //Material Ui
-import { createStyles } from "@material-ui/core/styles";
-import { CircularProgress } from "@material-ui/core";
-import Grid from "@material-ui/core/Grid";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
+import { createStyles } from '@material-ui/core/styles';
+import { CircularProgress } from '@material-ui/core';
+import Grid from '@material-ui/core/Grid';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 
-const styles = (theme: { palette: { common: { white: string } } }) =>
+const styles = (theme: any) =>
 	createStyles({
 		root: {
-			width: "100%",
-			"& > * + *": {
+			width: '100%',
+			'& > * + *': {
 				marginTop: 90,
 			},
-			"& .MuiFormControl-root": {
+			'& .MuiFormControl-root': {
 				width: 400,
 			},
-			"& .MuiInput-root": {
+			'& .MuiInput-root': {
 				width: 200,
 			},
 		},
@@ -34,61 +34,65 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 			width: 200,
 		},
 		title: {
-			position: "absolute",
-			display: "inline-block",
-			textDecoration: "none",
-			color: "#ffffff",
+			position: 'absolute',
+			display: 'inline-block',
+			textDecoration: 'none',
+			color: '#ffffff',
 		},
 		logo: {
 			maxWidth: 60,
 		},
 		layout: {
-			display: "flex",
-			flexDirection: "column",
-			justifyContent: "center",
-			maxWidth: "1349px",
-			position: "absolute",
+			display: 'flex',
+			flexDirection: 'column',
+			justifyContent: 'center',
+			maxWidth: '1349px',
+			position: 'absolute',
 			top: 100,
 		},
 		header: {
-			display: "flex",
-			flexDirection: "row",
+			display: 'flex',
+			flexDirection: 'row',
 			width: 1300,
 		},
 		headerText: {
-			justifyContent: "center",
-			color: "#325ca8",
+			justifyContent: 'center',
+			color: '#325ca8',
 		},
 		form: {
-			textAlign: "center",
+			textAlign: 'center',
 		},
 		pageTitle: {
-			margin: "20px auto 20px auto",
+			margin: '20px auto 20px auto',
 		},
 		textField: {
-			margin: "10px auto 10px auto",
+			margin: '10px auto 10px auto',
 		},
 		button: {
 			marginTop: 20,
 			marginRight: 20,
-			position: "relative",
-			textDecoration: "none",
+			position: 'relative',
+			textDecoration: 'none',
 		},
 		progress: {
-			position: "absolute",
+			position: 'absolute',
 		},
 		removeDecor: {
-			textDecoration: "none",
-			color: "primary",
+			textDecoration: 'none',
+			color: 'primary',
 		},
 	});
 
-const Signup = (props: { classes: any; history: any }) => {
-	const { classes } = props;
-
-	const [state, setState] = useState<any>({
-		email: "",
-		password: "",
+const Signup = (props: any) => {
+	const { classes, history } = props;
+	type ComponentState = {
+		email: string;
+		password: string;
+		loading: boolean;
+	};
+	const [state, setState] = useState<ComponentState>({
+		email: '',
+		password: '',
 		loading: false,
 	});
 
@@ -99,18 +103,19 @@ const Signup = (props: { classes: any; history: any }) => {
 
 	const clearFields = () => {
 		setState({
-			email: "",
-			password: "",
+			...state,
+			email: '',
+			password: '',
 		});
 	};
 
-	const handleSubmit = (event: { preventDefault: () => void }) => {
+	const handleSubmit = (event: any) => {
 		event.preventDefault();
 		firebase
 			.auth()
 			.createUserWithEmailAndPassword(state.email, state.password)
-			.then((u) => {
-				props.history.push("/");
+			.then(() => {
+				history.push('/');
 			})
 			.catch((error) => {
 				console.log(error);
@@ -122,8 +127,8 @@ const Signup = (props: { classes: any; history: any }) => {
 		<Fragment>
 			<AppBar>
 				<Toolbar>
-					<Link to="/">
-						<img src="Hospital.png" alt="Hospital" className={classes.logo} />
+					<Link to='/'>
+						<img src='Hospital.png' alt='Hospital' className={classes.logo} />
 						<h3 className={classes.title}>HospitalNow</h3>
 					</Link>
 				</Toolbar>
@@ -134,15 +139,15 @@ const Signup = (props: { classes: any; history: any }) => {
 					<Grid container className={classes.form}>
 						<Grid item sm />
 						<Grid item sm>
-							<Typography variant="h4" className={classes.pageTitle}>
+							<Typography variant='h4' className={classes.pageTitle}>
 								SIGN UP
 							</Typography>
 							<form noValidate onSubmit={handleSubmit}>
 								<TextField
-									id="email"
-									name="email"
-									type="email"
-									label="Email"
+									id='email'
+									name='email'
+									type='email'
+									label='Email'
 									className={classes.TextField}
 									value={state.email}
 									onChange={handleChange}
@@ -150,10 +155,10 @@ const Signup = (props: { classes: any; history: any }) => {
 								/>
 
 								<TextField
-									id="password"
-									name="password"
-									type="password"
-									label="Password"
+									id='password'
+									name='password'
+									type='password'
+									label='Password'
 									className={classes.TextField}
 									value={state.password}
 									onChange={handleChange}
@@ -161,12 +166,11 @@ const Signup = (props: { classes: any; history: any }) => {
 								/>
 
 								<Button
-									type="submit"
-									variant="contained"
-									color="primary"
+									type='submit'
+									variant='contained'
+									color='primary'
 									className={classes.button}
-									disabled={state.loading}
-								>
+									disabled={state.loading}>
 									SIGNUP
 									{state.loading && (
 										<CircularProgress size={20} className={classes.progress} />
@@ -174,12 +178,11 @@ const Signup = (props: { classes: any; history: any }) => {
 								</Button>
 								<br />
 								<small>
-									Don't have an account?{" "}
+									Don't have an account?{' '}
 									<Link
-										to="/login"
-										color="primary"
-										className={classes.removeDecor}
-									>
+										to='/login'
+										color='primary'
+										className={classes.removeDecor}>
 										Login
 									</Link>
 								</small>
