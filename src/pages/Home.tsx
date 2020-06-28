@@ -1,41 +1,41 @@
-import React, { Fragment, useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@apollo/react-hooks';
-import gql from 'graphql-tag';
-import withStyles from '@material-ui/core/styles/withStyles';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import firebase from '../utils/config';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import React, { Fragment, useState, useEffect, useCallback } from "react";
+import { useQuery } from "@apollo/react-hooks";
+import gql from "graphql-tag";
+import withStyles from "@material-ui/core/styles/withStyles";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import firebase from "../utils/config";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 //other Helper components
-import Result from './Result';
+import Result from "./Result";
 //Material Ui
-import { fade, createStyles } from '@material-ui/core/styles';
-import { CircularProgress } from '@material-ui/core';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import SearchIcon from '@material-ui/icons/Search';
-import Select from '@material-ui/core/Select';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
+import { fade, createStyles } from "@material-ui/core/styles";
+import { CircularProgress } from "@material-ui/core";
+import AppBar from "@material-ui/core/AppBar";
+import Toolbar from "@material-ui/core/Toolbar";
+import TextField from "@material-ui/core/TextField";
+import Button from "@material-ui/core/Button";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import SearchIcon from "@material-ui/icons/Search";
+import Select from "@material-ui/core/Select";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
 
 const styles = (theme: { palette: { common: { white: string } } }) =>
 	createStyles({
 		root: {
-			width: '100%',
-			'& > * + *': {
+			width: "100%",
+			"& > * + *": {
 				marginTop: 90,
 			},
-			'& .MuiFormControl-root': {
+			"& .MuiFormControl-root": {
 				width: 400,
 			},
-			'& .MuiInput-root': {
+			"& .MuiInput-root": {
 				width: 200,
 			},
 		},
@@ -46,65 +46,65 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 			width: 200,
 		},
 		title: {
-			position: 'absolute',
-			display: 'inline-block',
-			textDecoration: 'none',
-			color: '#ffffff',
+			position: "absolute",
+			display: "inline-block",
+			textDecoration: "none",
+			color: "#ffffff",
 		},
 		logo: {
 			maxWidth: 60,
 		},
 		layout: {
-			display: 'flex',
-			flexDirection: 'column',
-			justifyContent: 'center',
-			maxWidth: '1349px',
+			display: "flex",
+			flexDirection: "column",
+			justifyContent: "center",
+			maxWidth: "1349px",
 		},
 		header: {
-			display: 'flex',
-			flexDirection: 'row',
-			maxWidth: '1300px',
+			display: "flex",
+			flexDirection: "row",
+			maxWidth: "1300px",
 		},
 		headerLeft: {
-			justifyContent: 'flex-start',
+			justifyContent: "flex-start",
 			padding: 30,
-			textAlign: 'left',
+			textAlign: "left",
 		},
 		headerRight: {
-			justifyContent: 'flex-end',
+			justifyContent: "flex-end",
 			padding: 30,
-			textAlign: 'right',
+			textAlign: "right",
 			marginLeft: 300,
 		},
 		headerText: {
-			justifyContent: 'flex-start',
-			color: '#325ca8',
+			justifyContent: "flex-start",
+			color: "#325ca8",
 		},
 		tip: {
-			textDecoration: 'none',
+			textDecoration: "none",
 		},
 		locate: {
-			position: 'absolute',
+			position: "absolute",
 			right: 100,
-			background: 'none',
-			border: 'none',
+			background: "none",
+			border: "none",
 			zIndex: 10,
 		},
 		search: {
-			position: 'absolute',
+			position: "absolute",
 			left: 80,
-			'&:hover': {
+			"&:hover": {
 				backgroundColor: fade(theme.palette.common.white, 0.25),
 			},
-			borderColor: 'white',
+			borderColor: "white",
 			marginLeft: 0,
-			margin: '0 10px 5px 10px',
+			margin: "0 10px 5px 10px",
 		},
 		searchIcon: {
-			position: 'absolute',
+			position: "absolute",
 			top: 15,
 			left: 350,
-			cursor: 'pointer',
+			cursor: "pointer",
 		},
 		select: {
 			padding: 10,
@@ -112,24 +112,24 @@ const styles = (theme: { palette: { common: { white: string } } }) =>
 			width: 200,
 		},
 		listItem: {
-			alignItems: 'flex-start',
-			cursor: 'pointer',
+			alignItems: "flex-start",
+			cursor: "pointer",
 		},
 		inner: {
-			display: 'inline',
-			variant: 'body2',
+			display: "inline",
+			variant: "body2",
 		},
 		button: {
 			marginTop: 10,
 			marginRight: 10,
-			position: 'absolute',
+			position: "absolute",
 			right: 100,
 		},
 	});
 
 const Home = (props: any) => {
 	const { classes, history } = props;
-	const userId = localStorage.getItem('userId');
+	const userId = localStorage.getItem("userId");
 
 	const SEARCH_HISTORY = gql`
 		query($userId: ID!) {
@@ -160,7 +160,7 @@ const Home = (props: any) => {
 		error: any;
 	};
 	const [generalState, setGeneralState] = useState<GeneralState>({
-		search: '',
+		search: "",
 		coordinates: {
 			lat: 0,
 			lng: 0,
@@ -190,7 +190,7 @@ const Home = (props: any) => {
 				});
 			},
 			(error: any) => {
-				alert('Geolocation Failed, try enable your location');
+				alert("Geolocation Failed, try enable your location");
 			}
 		);
 	};
@@ -212,7 +212,7 @@ const Home = (props: any) => {
 	const logout = () => {
 		localStorage.clear();
 		firebase.auth().signOut();
-		history.push('/login');
+		history.push("/login");
 	};
 
 	useEffect(() => {
@@ -228,13 +228,11 @@ const Home = (props: any) => {
 			};
 			try {
 				const res = await axios.get(
-					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${distance *
-						1000}&type=health&name=${search}&key=AIzaSyDAHDj8RP4hlRA_GZsaLWqTUxkXlxU-8U8`
+					`https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${
+						distance * 1000
+					}&type=health&name=${search}&key=YOURAPIKEY`
 				);
-				await firebase
-					.firestore()
-					.collection('searches')
-					.add(payload);
+				await firebase.firestore().collection("searches").add(payload);
 				setNearbyplaces(res.data);
 				setloading(true);
 			} catch (error) {
@@ -268,12 +266,12 @@ const Home = (props: any) => {
 	};
 	const handleSubmit = (event: { preventDefault: () => void }) => {
 		event.preventDefault();
-		if (search === '') {
-			alert('Please fill the Details');
+		if (search === "") {
+			alert("Please fill the Details");
 		}
 		handleSetState({
-			search: '',
-			distance: '',
+			search: "",
+			distance: "",
 			loading: true,
 		});
 	};
@@ -315,16 +313,17 @@ const Home = (props: any) => {
 		<Fragment>
 			<AppBar>
 				<Toolbar>
-					<Link to='/'>
-						<img src='Hospital.png' alt='Hospital' className={classes.logo} />
+					<Link to="/">
+						<img src="Hospital.png" alt="Hospital" className={classes.logo} />
 						<h3 className={classes.title}>HospitalNow</h3>
 					</Link>
 					<Button
-						type='submit'
-						variant='contained'
-						color='secondary'
+						type="submit"
+						variant="contained"
+						color="secondary"
 						className={classes.button}
-						onClick={logout}>
+						onClick={logout}
+					>
 						LOGOUT
 					</Button>
 				</Toolbar>
@@ -340,15 +339,15 @@ const Home = (props: any) => {
 
 						<form noValidate onSubmit={handleSubmit} className={classes.search}>
 							<TextField
-								id='outline-search'
-								name='search'
-								type='text'
-								label='Enter any health related term'
-								color='primary'
+								id="outline-search"
+								name="search"
+								type="text"
+								label="Enter any health related term"
+								color="primary"
 								inputProps={{}}
 								value={search}
 								onChange={handleChange}
-								variant='outlined'
+								variant="outlined"
 								className={classes.MuiFormControlRoot}
 							/>
 
@@ -357,15 +356,16 @@ const Home = (props: any) => {
 								onClick={handleSubmit}
 							/>
 
-							<InputLabel id='label' className={classes.select}>
+							<InputLabel id="label" className={classes.select}>
 								Choose a Range(in KM)
 							</InputLabel>
 							<Select
-								labelId='label'
-								id='select'
+								labelId="label"
+								id="select"
 								value={distance}
 								onChange={handleSelect}
-								className={classes.MuiInputRoot}>
+								className={classes.MuiInputRoot}
+							>
 								<MenuItem value={1}>1</MenuItem>
 								<MenuItem value={2}>2</MenuItem>
 								<MenuItem value={3}>3</MenuItem>
